@@ -2,20 +2,37 @@ import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
 
-function openFiles(folderPath: string, recursive: boolean, newGroup: boolean) {
-  const files = recursive
-    ? getAllFiles(folderPath)
-    : fs.readdirSync(folderPath);
-  confirmAndOpenDocuments(files, folderPath, newGroup);
+
+function main(folderPath: string, recursive: boolean, newGroup: boolean) {
+  const filesToOpen = getFilesToOpen(folderPath, recursive);
+  confirmToOpen(filesToOpen, folderPath, newGroup);
 }
 
-function getAllFiles(dirPath: string, arrayOfFiles: string[] = []) {
+// 開くファイルを取得
+function getFilesToOpen(folderPath: string, recursive: boolean): string[] {
+  const files = getFiles(folderPath, recursive);
+  const openFiles = getOpenedFiles();
+  return files.filter(
+    (file) => !openFiles.includes(path.join(folderPath, file))
+  );
+}
+// ファイルリスト取得
+function getFiles(folderPath: string, recursive: boolean): string[] {
+  return recursive ? getAllFilesIn(folderPath) : fs.readdirSync(folderPath);
+}
+// 既に開いているファイルリスト取得
+function getOpenedFiles(): string[] {
+  return vscode.workspace.textDocuments.map((document) => document.fileName);
+}
+
+// フォルダ内のすべてのファイルリスト取得
+function getAllFilesIn(dirPath: string, arrayOfFiles: string[] = []): string[] {
   const files = fs.readdirSync(dirPath);
 
   files.forEach((file) => {
     const filePath = path.join(dirPath, file);
     if (fs.statSync(filePath).isDirectory()) {
-      getAllFiles(filePath, arrayOfFiles);
+      getAllFilesIn(filePath, arrayOfFiles);
     } else {
       arrayOfFiles.push(filePath);
     }
@@ -24,11 +41,8 @@ function getAllFiles(dirPath: string, arrayOfFiles: string[] = []) {
   return arrayOfFiles;
 }
 
-function confirmAndOpenDocuments(
-  files: string[],
-  folderPath: string,
-  newGroup: boolean
-) {
+// 確認ダイアログを表示
+function confirmToOpen(files: string[], folderPath: string, newGroup: boolean) {
   if (files.length > 10) {
     vscode.window
       .showWarningMessage(
@@ -47,6 +61,7 @@ function confirmAndOpenDocuments(
   }
 }
 
+// ファイルを開く
 function openDocuments(files: string[], folderPath: string, newGroup: boolean) {
   // 現在のエディターグループの列数を取得
   const viewColumn = newGroup
@@ -55,7 +70,7 @@ function openDocuments(files: string[], folderPath: string, newGroup: boolean) {
 
   files.forEach((file) => openDocument(file, folderPath, viewColumn));
 }
-
+// ファイルを開く
 function openDocument(
   file: string,
   folderPath: string,
@@ -75,7 +90,7 @@ export function activate(context: vscode.ExtensionContext) {
     "extension.openFilesInFolder",
     (folder) => {
       if (folder?.fsPath) {
-        openFiles(folder.fsPath, false, false);
+        main(folder.fsPath, false, false);
       }
     }
   );
@@ -85,7 +100,7 @@ export function activate(context: vscode.ExtensionContext) {
     "extension.openFilesInFolderRecursively",
     (folder) => {
       if (folder?.fsPath) {
-        openFiles(folder.fsPath, true, false);
+        main(folder.fsPath, true, false);
       }
     }
   );
@@ -95,7 +110,7 @@ export function activate(context: vscode.ExtensionContext) {
     "extension.openFilesInNewGroup",
     (folder) => {
       if (folder?.fsPath) {
-        openFiles(folder.fsPath, false, true);
+        main(folder.fsPath, false, true);
       }
     }
   );
@@ -105,7 +120,7 @@ export function activate(context: vscode.ExtensionContext) {
       "extension.openFilesInNewGroupRecursively",
       (folder) => {
         if (folder?.fsPath) {
-          openFiles(folder.fsPath, true, true);
+          main(folder.fsPath, true, true);
         }
       }
     );
