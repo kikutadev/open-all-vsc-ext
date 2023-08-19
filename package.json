@@ -10,9 +10,7 @@
   "engines": {
     "vscode": "^1.81.0"
   },
-  "categories": [
-    "Other"
-  ],
+  "license": "MIT",
   "main": "./out/extension.js",
   "activationEvents": [
     "onCommand:extension.openFilesInFolder",
@@ -93,5 +91,28 @@
     "mocha": "^10.2.0",
     "typescript": "^4.9.5",
     "vsce": "^2.15.0"
-  }
+  },
+  "publisher": "kikutadev",
+  "author": {
+    "name": "kikutadev",
+    "url": "https://kikuta.dev"
+  },
+  "homepage": "https://github.com/kikutadev/open-all-vsc-ext",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "folder",
+    "file",
+    "explorer"
+  ],
+  "extensionKind": [
+    "ui",
+    "workspace"
+  ],
+  "icon": "logo.png"
 }
