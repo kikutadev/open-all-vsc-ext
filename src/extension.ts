@@ -1,66 +1,121 @@
-import * as vscode from 'vscode';
-export function activate(context: vscode.ExtensionContext) {
-  /* commands */
-  let cmd = vscode.commands.registerCommand('vscode-context.capitalize', () => {
-    customContext('vscode-context.capitalize');
-  });
-  let cmd2 = vscode.commands.registerCommand('vscode-context.upText', () => {
-    customContext('vscode-context.upText');
-  });
-  let cmd3 = vscode.commands.registerCommand('vscode-context.lowerCase', () => {
-    customContext('vscode-context.lowerCase');
-  });
-  let cmd4 = vscode.commands.registerCommand('vscode-context.lowerText', () => {
-    customContext('vscode-context.lowerText');
-  });
+import * as vscode from "vscode";
+import * as fs from "fs";
+import * as path from "path";
 
-  context.subscriptions.push(cmd);
-  context.subscriptions.push(cmd2);
-  context.subscriptions.push(cmd3);
-  context.subscriptions.push(cmd4);
+function openFiles(folderPath: string, recursive: boolean, newGroup: boolean) {
+  const files = recursive
+    ? getAllFiles(folderPath)
+    : fs.readdirSync(folderPath);
+  confirmAndOpenDocuments(files, folderPath, newGroup);
 }
 
-const customContext = (key: string) => {
-  const editor = vscode.window.activeTextEditor;
-  if (editor) {
-    const document = editor.document;
-    const selection = editor.selection;
-    let text = document.getText(selection);
-    if (text) {
-      switch (key) {
-        case 'vscode-context.capitalize':
-          const upText = text.charAt(0).toUpperCase() + text.slice(1);
-          editor.edit((edit) => {
-            edit.replace(selection, upText);
-          });
-          break;
+function getAllFiles(dirPath: string, arrayOfFiles: string[] = []) {
+  const files = fs.readdirSync(dirPath);
 
-        case 'vscode-context.upText':
-          const upText2 = text.toUpperCase();
-          editor.edit((edit) => {
-            edit.replace(selection, upText2);
-          });
-          break;
+  files.forEach((file) => {
+    const filePath = path.join(dirPath, file);
+    if (fs.statSync(filePath).isDirectory()) {
+      getAllFiles(filePath, arrayOfFiles);
+    } else {
+      arrayOfFiles.push(filePath);
+    }
+  });
 
-        case 'vscode-context.lowerCase':
-          let lowerCase = text.toLowerCase();
-          lowerCase = lowerCase.charAt(0).toUpperCase() + lowerCase.slice(1);
-          editor.edit((edit) => {
-            edit.replace(selection, lowerCase);
-          });
-          break;
+  return arrayOfFiles;
+}
 
-        case 'vscode-context.lowerText':
-          let lowerText = text.toLowerCase();
-          editor.edit((edit) => {
-            edit.replace(selection, lowerText);
-          });
-          break;
+function confirmAndOpenDocuments(
+  files: string[],
+  folderPath: string,
+  newGroup: boolean
+) {
+  if (files.length > 10) {
+    vscode.window
+      .showWarningMessage(
+        `${files.length}のファイルを開こうとしています。続行しますか？`,
+        { modal: true },
+        "Yes",
+        "No"
+      )
+      .then((selection) => {
+        if (selection === "Yes") {
+          openDocuments(files, folderPath, newGroup);
+        }
+      });
+  } else {
+    openDocuments(files, folderPath, newGroup);
+  }
+}
+
+function openDocuments(files: string[], folderPath: string, newGroup: boolean) {
+  // 現在のエディターグループの列数を取得
+  const viewColumn = newGroup
+    ? (vscode.window.activeTextEditor?.viewColumn || 1) + 1
+    : undefined;
+
+  files.forEach((file) => openDocument(file, folderPath, viewColumn));
+}
+
+function openDocument(
+  file: string,
+  folderPath: string,
+  viewColumn?: vscode.ViewColumn
+) {
+  const filePath = path.isAbsolute(file) ? file : path.join(folderPath, file);
+  const fileUri = vscode.Uri.file(filePath);
+
+  vscode.workspace.openTextDocument(fileUri).then((doc) => {
+    vscode.window.showTextDocument(doc, { viewColumn });
+  });
+}
+
+export function activate(context: vscode.ExtensionContext) {
+  // コマンド1: フォルダ内のすべてのテキストファイルを開く
+  let openFilesInFolderDisposable = vscode.commands.registerCommand(
+    "extension.openFilesInFolder",
+    (folder) => {
+      if (folder?.fsPath) {
+        openFiles(folder.fsPath, false, false);
       }
     }
-  }
-};
+  );
+
+  // コマンド2: フォルダ内のすべてのファイルを再帰的に開く
+  let openFilesRecursivelyDisposable = vscode.commands.registerCommand(
+    "extension.openFilesInFolderRecursively",
+    (folder) => {
+      if (folder?.fsPath) {
+        openFiles(folder.fsPath, true, false);
+      }
+    }
+  );
+
+  // コマンド3: フォルダ内のすべてのファイルを新しいエディターグループで開く
+  let openFilesInNewGroupDisposable = vscode.commands.registerCommand(
+    "extension.openFilesInNewGroup",
+    (folder) => {
+      if (folder?.fsPath) {
+        openFiles(folder.fsPath, false, true);
+      }
+    }
+  );
+  // コマンド4: フォルダ内のすべてのファイルを新しいエディターグループで開く
+  let openFilesInNewGroupRecursivelyDisposable =
+    vscode.commands.registerCommand(
+      "extension.openFilesInNewGroupRecursively",
+      (folder) => {
+        if (folder?.fsPath) {
+          openFiles(folder.fsPath, true, true);
+        }
+      }
+    );
+
+  context.subscriptions.push(
+    openFilesInFolderDisposable,
+    openFilesRecursivelyDisposable,
+    openFilesInNewGroupDisposable,
+    openFilesInNewGroupRecursivelyDisposable
+  );
+}
 
 export function deactivate() {}
-// 先頭意外を小文字
-// 小文字に

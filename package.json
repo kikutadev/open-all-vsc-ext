@@ -1,51 +1,69 @@
 {
-  "name": "vscode-context",
-  "displayName": "vscode-context",
-  "description": "custom context",
+  "name": "open-all-vsc-ext",
+  "displayName": "Open All Files in Folder",
+  "description": "Open all files in the selected folder from the context menu",
   "version": "0.0.1",
   "engines": {
-    "vscode": "^1.69.0"
+    "vscode": "^1.81.0"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "onCommand:vscode-context.upText",
-    "onCommand:vscode-context.lowerText",
-    "onCommand:vscode-context.lowerCase"
-  ],
   "main": "./out/extension.js",
+  "activationEvents": [
+    "onCommand:extension.openFilesInFolder",
+    "onCommand:extension.openFilesInFolderRecursively",
+    "onCommand:extension.openFilesInNewGroup",
+    "onCommand:extension.openFilesInNewGroupRecursively"
+  ],
   "contributes": {
+    "submenus": [
+      {
+        "id": "openAllFiles.submenu",
+        "label": "全てのファイルを開く"
+      }
+    ],
     "commands": [
       {
-        "command": "vscode-context.upText",
-        "title": "すべて大文字"
+        "command": "extension.openFilesInFolder",
+        "title": "フォルダ内のファイルを開く"
       },
       {
-        "command": "vscode-context.lowerText",
-        "title": "すべて小文字"
+        "command": "extension.openFilesInFolderRecursively",
+        "title": "フォルダ内のファイルを再帰的に開く"
       },
       {
-        "command": "vscode-context.lowerCase",
-        "title": "先頭大文字"
+        "command": "extension.openFilesInNewGroup",
+        "title": "フォルダ内のファイルを別グループで開く"
+      },
+      {
+        "command": "extension.openFilesInNewGroupRecursively",
+        "title": "フォルダ内のファイルを再帰的に別グループで開く"
       }
     ],
     "menus": {
-      "editor/context": [
+      "explorer/context": [
         {
-          "when": "editorHasSelection",
-          "command": "vscode-context.upText",
-          "group": "myGroup@1"
+          "submenu": "openAllFiles.submenu",
+          "group": "openAllFiles"
+        }
+      ],
+      "openAllFiles.submenu": [
+        {
+          "command": "extension.openFilesInFolder",
+          "group": "openAllFiles"
         },
         {
-          "when": "editorHasSelection",
-          "command": "vscode-context.lowerText",
-          "group": "myGroup@2"
+          "command": "extension.openFilesInFolderRecursively",
+          "group": "openAllFiles"
         },
         {
-          "when": "editorHasSelection",
-          "command": "vscode-context.lowerCase",
-          "group": "myGroup@3"
+          "command": "extension.openFilesInNewGroup",
+          "group": "openAllFiles"
+        },
+        {
+          "command": "extension.openFilesInNewGroupRecursively",
+          "group": "openAllFiles"
         }
       ]
     }
@@ -61,15 +79,15 @@
   "devDependencies": {
     "@types/glob": "^7.2.0",
     "@types/mocha": "^9.1.1",
-    "@types/node": "16.x",
-    "@types/vscode": "^1.69.0",
-    "@typescript-eslint/eslint-plugin": "^5.30.0",
-    "@typescript-eslint/parser": "^5.30.0",
-    "@vscode/test-electron": "^2.1.5",
-    "eslint": "^8.18.0",
-    "glob": "^8.0.3",
-    "mocha": "^10.0.0",
-    "typescript": "^4.7.4",
-    "vsce": "^2.9.2"
+    "@types/node": "^16.18.41",
+    "@types/vscode": "^1.81.0",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0",
+    "@vscode/test-electron": "^2.3.4",
+    "eslint": "^8.47.0",
+    "glob": "^8.1.0",
+    "mocha": "^10.2.0",
+    "typescript": "^4.9.5",
+    "vsce": "^2.15.0"
   }
 }
