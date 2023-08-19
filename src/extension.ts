@@ -7,51 +7,46 @@ function main(folderPath: string, recursive: boolean, newGroup: boolean) {
   confirmToOpen(filesToOpen, folderPath, newGroup);
 }
 
-// 開くファイルを取得
+// 開くべきファイルを取得
 function getFilesToOpen(folderPath: string, recursive: boolean): string[] {
-  const files = getFiles(folderPath, recursive);
-  const openFiles = getOpenedFiles();
-  return files.filter((file) => !openFiles.includes(file));
+  const files = getFiles(folderPath, recursive); // 対象フォルダからファイルを取得
+  const openFiles = getOpenedFiles(); // 開いているファイルを取得
+  return files.filter((file) => !openFiles.includes(file)); // 開いていないファイルをフィルター
 }
 
-// 既に開いているファイルリスト取得
+// 既に開いているファイルのリストを取得
 function getOpenedFiles(): string[] {
   return vscode.workspace.textDocuments.map((document) => document.fileName);
 }
 
-// ファイルリスト取得
+// ファイルリストを取得（再帰的な探索が可能）
 function getFiles(folderPath: string, recursive: boolean): string[] {
-  const files = recursive
-    ? getAllFiles(folderPath)
-    : fs.readdirSync(folderPath);
-  const openFiles = getOpenedFiles();
-  return files.filter(
-    (file) =>
-      !openFiles.includes(
-        path.isAbsolute(file) ? file : path.join(folderPath, file)
-      )
-  );
+  return recursive
+    ? getAllFiles(folderPath) // 再帰的にフォルダ内のファイルを取得
+    : fs.readdirSync(folderPath); // 単一フォルダ内のファイルを取得
 }
-// フォルダ内のすべてのファイルリスト取得
+
+// フォルダ内のすべてのファイルリストを再帰的に取得
 function getAllFiles(dirPath: string, arrayOfFiles: string[] = []): string[] {
   const files = fs.readdirSync(dirPath);
 
   files.forEach((file) => {
     const filePath = path.join(dirPath, file);
     if (fs.statSync(filePath).isDirectory()) {
-      arrayOfFiles = getAllFiles(filePath, arrayOfFiles);
+      arrayOfFiles = getAllFiles(filePath, arrayOfFiles); // フォルダの場合、再帰的に探索
     } else {
-      arrayOfFiles.push(filePath);
+      arrayOfFiles.push(filePath); // ファイルの場合、配列に追加
     }
   });
 
   return arrayOfFiles;
 }
 
-// 確認ダイアログを表示
+// 確認ダイアログを表示し、ファイルを開く
 function confirmToOpen(files: string[], folderPath: string, newGroup: boolean) {
   if (files.length === 0) {
     showStatusBarMessage("すべてのファイルが開かれています。", 3000);
+    return;
   }
   if (files.length > 10) {
     vscode.window
@@ -67,20 +62,19 @@ function confirmToOpen(files: string[], folderPath: string, newGroup: boolean) {
         }
       });
   } else {
-    openDocuments(files, folderPath, newGroup);
+    openDocuments(files, folderPath, newGroup); // ファイル数が10以下の場合、直接開く
   }
 }
 
-// ファイルを開く
+// 複数のファイルを開く
 function openDocuments(files: string[], folderPath: string, newGroup: boolean) {
-  // 現在のエディターグループの列数を取得
   const viewColumn = newGroup
     ? (vscode.window.activeTextEditor?.viewColumn || 1) + 1
     : undefined;
-
   files.forEach((file) => openDocument(file, folderPath, viewColumn));
 }
-// ファイルを開く
+
+// 単一のファイルを開く
 function openDocument(
   file: string,
   folderPath: string,
@@ -94,6 +88,7 @@ function openDocument(
   });
 }
 
+// ステータスバーにメッセージを表示
 function showStatusBarMessage(message: string, duration?: number) {
   const statusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Left
@@ -108,7 +103,6 @@ function showStatusBarMessage(message: string, duration?: number) {
 
   return statusBarItem;
 }
-
 export function activate(context: vscode.ExtensionContext) {
   // コマンド1: フォルダ内のすべてのテキストファイルを開く
   let openFilesInFolderDisposable = vscode.commands.registerCommand(
