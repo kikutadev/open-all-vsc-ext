@@ -2,7 +2,6 @@ import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
 
-
 function main(folderPath: string, recursive: boolean, newGroup: boolean) {
   const filesToOpen = getFilesToOpen(folderPath, recursive);
   confirmToOpen(filesToOpen, folderPath, newGroup);
@@ -12,10 +11,10 @@ function main(folderPath: string, recursive: boolean, newGroup: boolean) {
 function getFilesToOpen(folderPath: string, recursive: boolean): string[] {
   const files = getFiles(folderPath, recursive);
   const openFiles = getOpenedFiles();
-  return files.filter(
-    (file) => !openFiles.includes(path.join(folderPath, file))
-  );
+  // ファイルパスを正規化して比較する
+  return files.filter((file) => !openFiles.includes(path.normalize(file)));
 }
+
 // ファイルリスト取得
 function getFiles(folderPath: string, recursive: boolean): string[] {
   return recursive ? getAllFilesIn(folderPath) : fs.readdirSync(folderPath);
@@ -32,6 +31,7 @@ function getAllFilesIn(dirPath: string, arrayOfFiles: string[] = []): string[] {
   files.forEach((file) => {
     const filePath = path.join(dirPath, file);
     if (fs.statSync(filePath).isDirectory()) {
+      // ここで再帰的に呼び出す場合、結果をarrayOfFilesに結合する
       getAllFilesIn(filePath, arrayOfFiles);
     } else {
       arrayOfFiles.push(filePath);
