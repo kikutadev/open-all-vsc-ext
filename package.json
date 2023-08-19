@@ -1,5 +1,9 @@
 {
   "name": "open-all-vsc-ext",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kikutadev/open-all-vsc-ext"
+  },
   "displayName": "Open All Files in Folder",
   "description": "Open all files in the selected folder from the context menu",
   "version": "0.0.1",
