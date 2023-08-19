@@ -5,7 +5,7 @@ VSCodeのエクスプローラーコンテキストメニューから、選択�
 ![](how-to-use.gif)
 
 ## この拡張機能を使うモチベーション
-**[Github Copilotを賢くする](https://www.ai-native.dev/docs/v/ja/design-patterns/working-on-small-chunk#description)**
+**[Github Copilotを賢くする](https://www.ai-native.dev/docs/v/ja/client-side-tips/pin-the-file-you-need#description)**
 
 
 
