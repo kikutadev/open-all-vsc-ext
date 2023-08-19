@@ -11,28 +11,35 @@ function main(folderPath: string, recursive: boolean, newGroup: boolean) {
 function getFilesToOpen(folderPath: string, recursive: boolean): string[] {
   const files = getFiles(folderPath, recursive);
   const openFiles = getOpenedFiles();
-  // ファイルパスを正規化して比較する
-  return files.filter((file) => !openFiles.includes(path.normalize(file)));
+  return files.filter((file) => !openFiles.includes(file));
 }
 
-// ファイルリスト取得
-function getFiles(folderPath: string, recursive: boolean): string[] {
-  return recursive ? getAllFilesIn(folderPath) : fs.readdirSync(folderPath);
-}
 // 既に開いているファイルリスト取得
 function getOpenedFiles(): string[] {
   return vscode.workspace.textDocuments.map((document) => document.fileName);
 }
 
+// ファイルリスト取得
+function getFiles(folderPath: string, recursive: boolean): string[] {
+  const files = recursive
+    ? getAllFiles(folderPath)
+    : fs.readdirSync(folderPath);
+  const openFiles = getOpenedFiles();
+  return files.filter(
+    (file) =>
+      !openFiles.includes(
+        path.isAbsolute(file) ? file : path.join(folderPath, file)
+      )
+  );
+}
 // フォルダ内のすべてのファイルリスト取得
-function getAllFilesIn(dirPath: string, arrayOfFiles: string[] = []): string[] {
+function getAllFiles(dirPath: string, arrayOfFiles: string[] = []): string[] {
   const files = fs.readdirSync(dirPath);
 
   files.forEach((file) => {
     const filePath = path.join(dirPath, file);
     if (fs.statSync(filePath).isDirectory()) {
-      // ここで再帰的に呼び出す場合、結果をarrayOfFilesに結合する
-      getAllFilesIn(filePath, arrayOfFiles);
+      arrayOfFiles = getAllFiles(filePath, arrayOfFiles);
     } else {
       arrayOfFiles.push(filePath);
     }
@@ -43,6 +50,9 @@ function getAllFilesIn(dirPath: string, arrayOfFiles: string[] = []): string[] {
 
 // 確認ダイアログを表示
 function confirmToOpen(files: string[], folderPath: string, newGroup: boolean) {
+  if (files.length === 0) {
+    showStatusBarMessage("すべてのファイルが開かれています。", 3000);
+  }
   if (files.length > 10) {
     vscode.window
       .showWarningMessage(
@@ -82,6 +92,21 @@ function openDocument(
   vscode.workspace.openTextDocument(fileUri).then((doc) => {
     vscode.window.showTextDocument(doc, { viewColumn });
   });
+}
+
+function showStatusBarMessage(message: string, duration?: number) {
+  const statusBarItem = vscode.window.createStatusBarItem(
+    vscode.StatusBarAlignment.Left
+  );
+  statusBarItem.text = message;
+  statusBarItem.show();
+
+  // 指定された時間後にメッセージを隠す
+  if (duration) {
+    setTimeout(() => statusBarItem.dispose(), duration);
+  }
+
+  return statusBarItem;
 }
 
 export function activate(context: vscode.ExtensionContext) {
